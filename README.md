@@ -1,12 +1,14 @@
 # Portfolio Builder
 
+![GitHub](https://img.shields.io/github/license/joeycarter/portfolio-builder)
+
 A simple tool to build an ETF-based portfolio with a mix of bonds and equities depending on your preferred risk level and available cash.
 
 The ETF selection used here is based on the [Model ETF Portfolios](https://www.canadianportfoliomanagerblog.com/model-etf-portfolios/) article from the [Canadian Portfolio Manager](https://www.canadianportfoliomanagerblog.com/).
 
 ## Usage
 
-### Build a Portfolio from Scratch
+### Build a portfolio from scratch
 
 Run `portfolio-builder.py` and input your desired risk level, available cash to invest, and preferred ETF provider.
 The "risk level" is an integer on a scale from 0 (all bonds) to 10 (all equities).
@@ -74,7 +76,8 @@ Total cost:    $-129.16 CAD
 Leftover cash: $129.16 CAD
 ```
 
-You can also rebalance while investing additional cash, e.g. with $2000 CAD:
+You can also rebalance while investing additional cash.
+For example, to rebalance your portfolio according to the 50% bonds, 50% equities targets as above, while investing an additional $2000 CAD, run:
 
 ```console
 $ ./portfolio-builder.py -r 5 -c 2000 -e vanguard --rebalance
@@ -100,3 +103,15 @@ VEE.TO   39.940          10           1          11   439.34         3.94       
 Total cost:    $1866.56 CAD
 Leftover cash: $133.44 CAD
 ```
+
+## Disclaimer
+
+**THIS SOFTWARE IS NOT INVESTMENT ADVICE**
+
+This software is for informational purposes only. You should not construe any such information or other material as legal, tax, investment, financial, or other advice. Nothing contained in this software constitutes a solicitation, recommendation, endorsement, to buy or sell any securities or other financial instruments in this or in any other jurisdiction in which such solicitation or offer would be unlawful under the securities laws of such jurisdiction.
+
+The content on this software is information of a general nature and does not address the circumstances of any particular individual or entity. Nothing in this software constitutes professional and/or financial advice, nor does any information in this software constitute a comprehensive or complete statement of the matters discussed or the law relating thereto. You alone assume the sole responsibility of evaluating the merits and risks associated with the use of any information or other content in this software before making any decisions based on such information or other content. In exchange for using this software, you agree not to hold me, the copyright holder of this software, my affiliates or any third party service provider liable for any possible claim for damages arising from any decision you make based on information or other content made available to you through this software.
+
+**INVESTMENT RISKS**
+
+There are risks associated with investing in securities. Investing in stocks, bonds, exchange traded funds, mutual funds, and money market funds involve risk of loss. Loss of principal is possible. Some high-risk investments may use leverage, which will accentuate gains & losses. Foreign investing involves special risks, including a greater volatility and political, economic and currency risks and differences in accounting methods. A security's or a firm's past investment performance is not a guarantee or predictor of future investment performance.

@@ -50,7 +50,7 @@ VAB.TO,VBU.TO,VBG.TO,VCN.TO,VUN.TO,VIU.TO,VEE.TO
 Then, to rebalance your portfolio according to the 50% bonds, 50% equities targets as above, run:
 
 ```console
-./portfolio-builder.py -r 5 -c 0 -e vanguard --rebalance
+$ ./portfolio-builder.py -r 5 -c 0 -e vanguard --rebalance
 Reading current account data...
 Retrieving current ETF prices...
 [*********************100%***********************]  7 of 7 completed

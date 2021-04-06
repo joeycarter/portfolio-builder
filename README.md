@@ -115,3 +115,7 @@ The content on this software is information of a general nature and does not add
 **INVESTMENT RISKS**
 
 There are risks associated with investing in securities. Investing in stocks, bonds, exchange traded funds, mutual funds, and money market funds involve risk of loss. Loss of principal is possible. Some high-risk investments may use leverage, which will accentuate gains & losses. Foreign investing involves special risks, including a greater volatility and political, economic and currency risks and differences in accounting methods. A security's or a firm's past investment performance is not a guarantee or predictor of future investment performance.
+
+**DO YOUR OWN RESEARCH**
+
+This software is intended to be used and must be used for information and education purposes only. It is very important to do your own analysis before making any investment based on your own personal circumstances. You should take independent financial advice from a professional in connection with, or independently research and verify, any information that you find in this software and wish to rely upon, whether for the purpose of making an investment decision or otherwise.

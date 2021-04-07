@@ -75,6 +75,10 @@ class Portfolio:
     cash : float
         Cash to invest (CAD).
 
+    fractions : bool
+        Allow fractions when computing number of shares to buy/sell. Normally
+        these numbers are required to be whole numbers.
+
     mode : :class:`.Mode`
         Portfolio mode. Choose from `build` (build a portfolio from scratch) and
         `rebalance` (rebalance an existing portfolio).
@@ -83,10 +87,11 @@ class Portfolio:
         Be verbose.
     """
 
-    def __init__(self, risk_level, etf_provider, cash, mode, verbose):
+    def __init__(self, risk_level, etf_provider, cash, fractions, mode, verbose):
         self.risk_level = risk_level
         self.etf_provider = etf_provider
         self.cash = cash
+        self.fractions = fractions
         self.mode = mode
         self.verbose = verbose
 
@@ -162,27 +167,27 @@ class Portfolio:
             " ".join(self.allocations.columns), start=datetime.datetime.now()
         )["Close"].iloc[-1]
 
+        click.echo("Done")
+
         # Use same ticker order
         self.current_prices = self.current_prices.reindex(self.allocations.columns)
 
         if self.mode == Mode.build:
             # Build from scratch
-            self.shares = np.floor(
+            self.shares = (
                 self.cash * (self.allocations.loc[self.risk_level] / 100) / self.current_prices
-            ).astype("int")
+            )
 
         elif self.mode == Mode.rebalance:
             # Rebalance current portfolio
-            self.shares = np.floor(
-                (
-                    (self.allocations.loc[self.risk_level] / 100)
-                    * (self.cash + np.sum(self.account * self.current_prices))
-                    - self.account * self.current_prices
-                )
-                / self.current_prices
-            ).astype("int")
+            self.shares = (
+                (self.allocations.loc[self.risk_level] / 100)
+                * (self.cash + np.sum(self.account * self.current_prices))
+                - self.account * self.current_prices
+            ) / self.current_prices
 
-        click.echo("Done")
+        if not self.fractions:
+            self.shares = np.floor(self.shares).astype("int")
 
         if np.all(self.shares == 0):
             echo_warning("Insufficient funds to build portfolio to targets")
@@ -207,7 +212,10 @@ class Portfolio:
                 "Target % of\nPortfolio": self.allocations.loc[self.risk_level].to_list(),
             }
 
-            fmt = ("", ".3f", "", ".2f", ".2f", ".2f")
+            if self.fractions:
+                fmt = ("", ".3f", ".2f", ".2f", ".2f", ".2f")
+            else:
+                fmt = ("", ".3f", "", ".2f", ".2f", ".2f")
 
         elif self.mode == Mode.rebalance:
             total_shares = self.shares + self.account
@@ -227,7 +235,10 @@ class Portfolio:
                 "Target % of\nPortfolio": self.allocations.loc[self.risk_level].to_list(),
             }
 
-            fmt = ("", ".3f", "", "", ".2f", ".2f", ".2f", ".2f")
+            if self.fractions:
+                fmt = ("", ".3f", "", ".2f", ".2f", ".2f", ".2f", ".2f")
+            else:
+                fmt = ("", ".3f", "", "", ".2f", ".2f", ".2f", ".2f")
 
         click.echo("Your portfolio:")
         click.echo("~~~~~~~~~~~~~~~\n")
@@ -265,6 +276,14 @@ class Portfolio:
     help="Cash available to invest (CAD).",
 )
 @click.option(
+    "-f",
+    "--fractions",
+    is_flag=True,
+    default=False,
+    help="Allow fractions when computing number of shares to buy/sell. "
+    "Normally these numbers are required to be whole numbers.",
+)
+@click.option(
     "--rebalance",
     is_flag=True,
     default=False,
@@ -274,14 +293,14 @@ class Portfolio:
 @click.option(
     "-v", "--verbose", count=True, help="Be verbose. Multiple -v options increase the verbosity."
 )
-def main(risk_level, etf_provider, cash, rebalance, verbose):
+def main(risk_level, etf_provider, cash, fractions, rebalance, verbose):
     """A simple tool to build an ETF-based portfolio with a mix of bonds and
     equities depending on your preferred risk level and available cash.
     """
     try:
         mode = Mode.rebalance if rebalance else Mode.build
 
-        portfolio = Portfolio(risk_level, etf_provider, cash, mode, verbose)
+        portfolio = Portfolio(risk_level, etf_provider, cash, fractions, mode, verbose)
         portfolio.build()
         portfolio.print_portfolio()
 

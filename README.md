@@ -13,7 +13,7 @@ The ETF selection used here is based on the [Model ETF Portfolios](https://www.c
 Run `portfolio-builder.py` and input your desired risk level, available cash to invest, and preferred ETF provider.
 The "risk level" is an integer on a scale from 0 (all bonds) to 10 (all equities).
 
-For example, to build a balanced (50% bonds, 50% equities) portfolio with $1000 CAD using Vanguard ETFs:
+For example, to build a balanced (50% bonds, 50% equities) portfolio with $10000 CAD using Vanguard ETFs:
 
 ```console
 $ ./portfolio-builder.py -r 5 -c 10000 -e vanguard
@@ -38,6 +38,7 @@ VEE.TO   39.940           9   359.46         3.66           3.96
 Total cost:    $9815.06 CAD
 Leftover cash: $184.94 CAD
 ```
+
 
 ### Rebalance an existing portfolio
 
@@ -103,6 +104,41 @@ VEE.TO   39.940          10           1          11   439.34         3.94       
 Total cost:    $1866.56 CAD
 Leftover cash: $133.44 CAD
 ```
+
+### Allow fractional shares
+
+You'll notice there is large amount of cash left over in the above examples.
+This is due to the requirement that the number of shares to buy or sell is an integer number and that the total cost is less than the cash available to invest.
+If you want to allow fractions when computing the number of shares to buy/sell, use the `--fractions` option, for example:
+
+```console
+$ ./portfolio-builder.py -r 5 -c 10000 -e vanguard --fractions
+Retrieving current ETF prices...
+[*********************100%***********************]  7 of 7 completed
+Done
+
+Your portfolio:
+~~~~~~~~~~~~~~~
+
+ETF       Price          To    Value         % of    Target % of
+          (CAD)    Buy/Sell    (CAD)    Portfolio      Portfolio
+------  -------  ----------  -------  -----------  -------------
+VAB.TO   25.850      113.93  2945.00        29.45          29.45
+VBU.TO   25.680       33.26   854.00         8.54           8.54
+VBG.TO   27.455       43.74  1201.00        12.01          12.01
+VCN.TO   38.530       38.93  1500.00        15.00          15.00
+VUN.TO   72.360       28.57  2067.00        20.67          20.67
+VIU.TO   31.760       32.65  1037.00        10.37          10.37
+VEE.TO   39.940        9.91   396.00         3.96           3.96
+
+Total cost:    $10000.00 CAD
+Leftover cash: $0.00 CAD
+```
+
+### How "current" are the "current prices"?
+
+The portfolio builder retrieves the current stock prices using the [*yfinance*](https://pypi.org/project/yfinance/) package, and uses the most recent "Close" price of that stock.
+Therefore the prices listed by the portfolio builder are not guaranteed to be the current "live" market price of the stock, and should serve as an approximate value only.
 
 ## Disclaimer
 

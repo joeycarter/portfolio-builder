@@ -26,6 +26,7 @@ the Canadian Portfolio Manager website:
 import datetime
 import enum
 import glob
+import os
 import sys
 
 import click
@@ -69,8 +70,11 @@ class Portfolio:
     risk_level : int
         Risk level (0 to 10).
 
-    etf_provider : str
-        ETF provider. Currently on 'vanguard' and 'ishares' are supported.
+    targets : str
+        Either the path to file containing ETF allocation targets, or the name
+        of a predefined portfolio. If it is the latter, the portfolio builder
+        will search the `targets/` directory for a file of the form
+        `<targets>.csv`, where `<targets>` is the name provided.
 
     cash : float
         Cash to invest (CAD).
@@ -87,22 +91,24 @@ class Portfolio:
         Be verbose.
     """
 
-    def __init__(self, risk_level, etf_provider, cash, fractions, mode, verbose):
+    def __init__(self, risk_level, targets, cash, fractions, mode, verbose):
         self.risk_level = risk_level
-        self.etf_provider = etf_provider
+        self.targets = targets
         self.cash = cash
         self.fractions = fractions
         self.mode = mode
         self.verbose = verbose
 
-        if etf_provider == "vanguard":
-            self.allocations = pd.read_csv("data/allocations_vanguard.csv", index_col=0)
+        if os.path.isfile(self.targets):
+            self.allocations = pd.read_csv(self.targets, index_col=0)
 
-        elif etf_provider == "ishares":
-            self.allocations = pd.read_csv("data/allocations_ishares.csv", index_col=0)
+        elif os.path.isfile(os.path.join("targets", f"{self.targets}.csv")):
+            self.allocations = pd.read_csv(
+                os.path.join("targets", f"{self.targets}.csv"), index_col=0
+            )
 
         else:
-            raise PortfolioException(f"unknown ETF provider '{etf_provider}'")
+            raise PortfolioException(f"could not open targets file '{self.targets}'")
 
         self.current_prices = None
         self.shares = None
@@ -262,11 +268,14 @@ class Portfolio:
     help="Risk level on a scale from 0 (all bonds) to 10 (all equities).",
 )
 @click.option(
-    "-e",
-    "--etf-provider",
-    type=click.Choice(["vanguard", "ishares"], case_sensitive=False),
-    prompt="Enter your preferred ETF provider",
-    help="ETF provider. Choose from 'vanguard' and 'ishares'.",
+    "-t",
+    "--targets",
+    prompt="Enter the path to file containing ETF allocation targets or the name "
+    "of the portfolio",
+    help="Either the path to file containing ETF allocation targets, or the name "
+    "of a predefined portfolio. If it is the latter, the portfolio builder "
+    "will search the `targets/` directory for a file of the form "
+    "`<targets>.csv`, where `<targets>` is the name provided.",
 )
 @click.option(
     "-c",
@@ -293,14 +302,14 @@ class Portfolio:
 @click.option(
     "-v", "--verbose", count=True, help="Be verbose. Multiple -v options increase the verbosity."
 )
-def main(risk_level, etf_provider, cash, fractions, rebalance, verbose):
+def main(risk_level, targets, cash, fractions, rebalance, verbose):
     """A simple tool to build an ETF-based portfolio with a mix of bonds and
     equities depending on your preferred risk level and available cash.
     """
     try:
         mode = Mode.rebalance if rebalance else Mode.build
 
-        portfolio = Portfolio(risk_level, etf_provider, cash, fractions, mode, verbose)
+        portfolio = Portfolio(risk_level, targets, cash, fractions, mode, verbose)
         portfolio.build()
         portfolio.print_portfolio()
 

@@ -4,19 +4,37 @@
 
 A simple tool to build an ETF-based portfolio with a mix of bonds and equities depending on your preferred risk level and available cash.
 
-The ETF selection used here is based on the [Model ETF Portfolios](https://www.canadianportfoliomanagerblog.com/model-etf-portfolios/) article from the [Canadian Portfolio Manager](https://www.canadianportfoliomanagerblog.com/).
+The sample ETF selections used here are based on the [Model ETF Portfolios](https://www.canadianportfoliomanagerblog.com/model-etf-portfolios/) article from the [Canadian Portfolio Manager](https://www.canadianportfoliomanagerblog.com/).
 
 ## Usage
 
+### Define your ETF allocation targets
+
+Before building your portfolio, you will have to define your ETF allocation targets; that is, what proportion of your portfolio you want to invest into each ETF.
+Your targets should be placed into a `.csv` file in the `targets/` directory, and follow the format:
+
+```
+risk,ETF1,ETF2,ETF3,...
+0,val01,val02,val03,...
+1,val11,val12,val13,...
+...
+```
+
+where `ETF1,2,3,...` are the ticker names for each ETF as it appears in [*Yahoo! Finance*](https://ca.finance.yahoo.com/) (including suffixes, such as ".TO" for stocks traded on the Toronto Stock Exchange), the first column denotes the risk level for that row, and `val<ij>` are the allocation of stock `j`, per risk level `i`, in your portfolio in percent (therefore each row should sum to 100).
+The "risk level" is an integer and is normally treated on a scale from 0 (all bonds) to 10 (all equities).
+
+Sample target ETF allocation files are provided in the `targets/` directory: `vanguard.csv` and `ishares.csv`.
+
 ### Build a portfolio from scratch
 
-Run `portfolio-builder.py` and input your desired risk level, available cash to invest, and preferred ETF provider.
-The "risk level" is an integer on a scale from 0 (all bonds) to 10 (all equities).
+Run `portfolio-builder.py` and input your desired risk level, available cash to invest, and target allocation file.
+Input the target allocation file either as the path to the file containing the ETF allocation targets, or as the name of a predefined portfolio.
+If it is the latter, the portfolio builder will search the `targets/` directory for a file of the form `<targets>.csv`, where `<targets>` is the name provided.
 
 For example, to build a balanced (50% bonds, 50% equities) portfolio with $10000 CAD using Vanguard ETFs:
 
 ```console
-$ ./portfolio-builder.py -r 5 -c 10000 -e vanguard
+$ ./portfolio-builder.py -r 5 -c 10000 -t vanguard
 Retrieving current ETF prices...
 [*********************100%***********************]  7 of 7 completed
 Done
@@ -53,7 +71,7 @@ VAB.TO,VBU.TO,VBG.TO,VCN.TO,VUN.TO,VIU.TO,VEE.TO
 Then, to rebalance your portfolio according to the 50% bonds, 50% equities targets as above, run:
 
 ```console
-$ ./portfolio-builder.py -r 5 -c 0 -e vanguard --rebalance
+$ ./portfolio-builder.py -r 5 -c 0 -t vanguard --rebalance
 Reading current account data...
 Retrieving current ETF prices...
 [*********************100%***********************]  7 of 7 completed
@@ -81,7 +99,7 @@ You can also rebalance while investing additional cash.
 For example, to rebalance your portfolio according to the 50% bonds, 50% equities targets as above, while investing an additional $2000 CAD, run:
 
 ```console
-$ ./portfolio-builder.py -r 5 -c 2000 -e vanguard --rebalance
+$ ./portfolio-builder.py -r 5 -c 2000 -t vanguard --rebalance
 Reading current account data...
 Retrieving current ETF prices...
 [*********************100%***********************]  7 of 7 completed
@@ -112,7 +130,7 @@ This is due to the requirement that the number of shares to buy or sell is an in
 If you want to allow fractions when computing the number of shares to buy/sell, use the `--fractions` option, for example:
 
 ```console
-$ ./portfolio-builder.py -r 5 -c 10000 -e vanguard --fractions
+$ ./portfolio-builder.py -r 5 -c 10000 -t vanguard --fractions
 Retrieving current ETF prices...
 [*********************100%***********************]  7 of 7 completed
 Done

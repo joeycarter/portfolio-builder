@@ -169,8 +169,12 @@ class Portfolio:
         """Build the current portfolio based on current prices and available cash."""
         click.echo("Retrieving current ETF prices...")
 
+        # Retrieve data for past 5 days
+        # Ensures data is available if running on a day when markets are closed
+        start_time = datetime.datetime.now() - datetime.timedelta(days=5)
+
         self.current_prices = yf.download(
-            " ".join(self.allocations.columns), start=datetime.datetime.now()
+            " ".join(self.allocations.columns), start=start_time
         )["Close"].iloc[-1]
 
         click.echo("Done")

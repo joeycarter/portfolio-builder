@@ -13,11 +13,11 @@
 Portfolio Builder
 =================
 
-A simple tool to build an ETF-based portfolio with a mix of bonds and equities
-depending on your preferred risk level and available cash.
+A simple tool to build an ETF-based portfolio with a mix of bonds and equities depending
+on your preferred risk level and available cash.
 
-The ETF selection used here is based on the "Model ETF Portfolios" article from
-the Canadian Portfolio Manager website:
+The ETF selection used here is based on the "Model ETF Portfolios" article from the
+Canadian Portfolio Manager website:
 
     https://www.canadianportfoliomanagerblog.com/model-etf-portfolios/
 """
@@ -71,17 +71,22 @@ class Portfolio:
         Risk level (0 to 10).
 
     targets : str
-        Either the path to file containing ETF allocation targets, or the name
-        of a predefined portfolio. If it is the latter, the portfolio builder
-        will search the `targets/` directory for a file of the form
-        `<targets>.csv`, where `<targets>` is the name provided.
+        Either the path to file containing ETF allocation targets, or the name of a
+        predefined portfolio. If it is the latter, the portfolio builder will search the
+        `targets/` directory for a file of the form `<targets>.csv`, where `<targets>`
+        is the name provided.
+
+    account_file : str
+        Path to account data file. Account data is only used when rebalancing a
+        portfolio. If none is provided, the portfolio builder searches the 'accounts/'
+        directory for .csv files containing account data.
 
     cash : float
         Cash to invest (CAD).
 
     fractions : bool
-        Allow fractions when computing number of shares to buy/sell. Normally
-        these numbers are required to be whole numbers.
+        Allow fractions when computing number of shares to buy/sell. Normally these
+        numbers are required to be whole numbers.
 
     mode : :class:`.Mode`
         Portfolio mode. Choose from `build` (build a portfolio from scratch) and
@@ -91,9 +96,12 @@ class Portfolio:
         Be verbose.
     """
 
-    def __init__(self, risk_level, targets, cash, fractions, mode, verbose):
+    def __init__(
+        self, risk_level, targets, account_file, cash, fractions, mode, verbose
+    ):
         self.risk_level = risk_level
         self.targets = targets
+        self.account_file = account_file
         self.cash = cash
         self.fractions = fractions
         self.mode = mode
@@ -116,15 +124,21 @@ class Portfolio:
         if self.mode == Mode.build:
             self.account = None
         elif self.mode == Mode.rebalance:
-            self.account = self._read_account_data()
+            self.account = self._read_account_data(self.account_file)
         else:
             raise PortfolioException(f"unknown portfolio mode '{self.mode}'")
 
-    def _read_account_data(self):
+    def _read_account_data(self, account_file=None):
         """Read current account data.
 
-        Searches the 'accounts' directory for .csv files. If more than one file
-        is found, the user is prompted to select which one to use.
+        If `account_file` is None, this function searches the 'accounts/' directory for
+        .csv files. If more than one file is found, the user is prompted to select which
+        one to use.
+
+        Parameters
+        ----------
+        account_file : str, optional
+            Path to account data file. See note above if `None` is passed.
 
         Returns
         -------
@@ -133,35 +147,42 @@ class Portfolio:
         """
         click.echo("Reading current account data...")
 
-        account_files = glob.glob("accounts/*.csv")
+        if account_file is None:
+            account_files = glob.glob("accounts/*.csv")
 
-        if len(account_files) == 1:
-            account_file = account_files[0]
+            if len(account_files) == 1:
+                account_file = account_files[0]
 
-        elif len(account_files) > 1:
-            click.echo("Found multiple account data files:")
-            for i, account_file in enumerate(account_files):
-                click.echo(f"  ({i}) {account_file}")
+            elif len(account_files) > 1:
+                click.echo("Found multiple account data files:")
+                for i, account_file in enumerate(account_files):
+                    click.echo(f"  ({i}) {account_file}")
 
-            while True:
-                index = click.prompt(
-                    "Please enter which account file you would like to use", type=int
-                )
+                while True:
+                    index = click.prompt(
+                        "Please enter which account file you would like to use",
+                        type=int,
+                    )
 
-                if index >= 0 and index < len(account_files):
-                    break
-                else:
-                    click.echo(f"Error: invalid account file {index}")
+                    if index >= 0 and index < len(account_files):
+                        break
+                    else:
+                        click.echo(f"Error: invalid account file {index}")
 
-            account_file = account_files[index]
+                account_file = account_files[index]
 
-        else:
-            raise PortfolioException("no account data file")
+            else:
+                raise PortfolioException("no account data file")
 
         if self.verbose:
             click.echo(f" -> Reading account data from file '{account_file}'")
 
         account = pd.read_csv(account_file)
+
+        # You can add the target risk in your account data file for reference,
+        # but we do not want the dataframe to keep this information
+        if "risk" in account.columns:
+            account.drop("risk", axis="columns", inplace=True)
 
         return account.iloc[0]  # For now only return first row
 
@@ -185,10 +206,16 @@ class Portfolio:
         if self.mode == Mode.build:
             # Build from scratch
             self.shares = (
-                self.cash * (self.allocations.loc[self.risk_level] / 100) / self.current_prices
+                self.cash
+                * (self.allocations.loc[self.risk_level] / 100)
+                / self.current_prices
             )
 
         elif self.mode == Mode.rebalance:
+            # Check that target and account securities agree
+            if not self.allocations.columns.equals(self.account.index):
+                raise PortfolioException("target and account securities do not agree")
+
             # Rebalance current portfolio
             self.shares = (
                 (self.allocations.loc[self.risk_level] / 100)
@@ -205,8 +232,10 @@ class Portfolio:
         click.echo()
 
     def print_portfolio(self):
+        """Print the built portfolio."""
         if self.shares is None:
-            echo_error("portfolio has not been built yet")
+            echo_warning("cannot display portfolio: portfolio has not been built yet")
+            return
 
         if self.mode == Mode.build:
             data = {
@@ -219,7 +248,9 @@ class Portfolio:
                     * (self.shares * self.current_prices)
                     / np.sum(self.shares * self.current_prices)
                 ).to_list(),
-                "Target % of\nPortfolio": self.allocations.loc[self.risk_level].to_list(),
+                "Target % of\nPortfolio": self.allocations.loc[
+                    self.risk_level
+                ].to_list(),
             }
 
             if self.fractions:
@@ -242,7 +273,9 @@ class Portfolio:
                     * (total_shares * self.current_prices)
                     / np.sum(total_shares * self.current_prices)
                 ).to_list(),
-                "Target % of\nPortfolio": self.allocations.loc[self.risk_level].to_list(),
+                "Target % of\nPortfolio": self.allocations.loc[
+                    self.risk_level
+                ].to_list(),
             }
 
             if self.fractions:
@@ -274,12 +307,26 @@ class Portfolio:
 @click.option(
     "-t",
     "--targets",
-    prompt="Enter the path to file containing ETF allocation targets or the name "
-    "of the portfolio",
-    help="Either the path to file containing ETF allocation targets, or the name "
-    "of a predefined portfolio. If it is the latter, the portfolio builder "
-    "will search the `targets/` directory for a file of the form "
-    "`<targets>.csv`, where `<targets>` is the name provided.",
+    prompt=(
+        "Enter the path to file containing ETF allocation targets or the name of the"
+        " portfolio"
+    ),
+    help=(
+        "Either the path to file containing ETF allocation targets, or the name of a"
+        " predefined portfolio. If it is the latter, the portfolio builder will search"
+        " the `targets/` directory for a file of the form `<targets>.csv`, where"
+        " `<targets>` is the name provided."
+    ),
+)
+@click.option(
+    "-a",
+    "--account",
+    type=click.Path(exists=True),
+    help=(
+        "Path to account data file. Account data is only used when rebalancing a"
+        " portfolio. If none is provided, the portfolio builder searches the"
+        " 'accounts/' directory for .csv files containing account data."
+    ),
 )
 @click.option(
     "-c",
@@ -293,27 +340,36 @@ class Portfolio:
     "--fractions",
     is_flag=True,
     default=False,
-    help="Allow fractions when computing number of shares to buy/sell. "
-    "Normally these numbers are required to be whole numbers.",
+    help=(
+        "Allow fractions when computing number of shares to buy/sell. Normally these"
+        " numbers are required to be whole numbers."
+    ),
 )
 @click.option(
     "--rebalance",
     is_flag=True,
     default=False,
-    help="Rebalance an existing portfolio. Place accounts in your portfolio in "
-    "the 'accounts/' directory.",
+    help=(
+        "Rebalance an existing portfolio. Place accounts in your portfolio in the"
+        " 'accounts/' directory."
+    ),
 )
 @click.option(
-    "-v", "--verbose", count=True, help="Be verbose. Multiple -v options increase the verbosity."
+    "-v",
+    "--verbose",
+    count=True,
+    help="Be verbose. Multiple -v options increase the verbosity.",
 )
-def main(risk_level, targets, cash, fractions, rebalance, verbose):
-    """A simple tool to build an ETF-based portfolio with a mix of bonds and
-    equities depending on your preferred risk level and available cash.
+def main(risk_level, targets, account, cash, fractions, rebalance, verbose):
+    """A simple tool to build an ETF-based portfolio with a mix of bonds and equities
+    depending on your preferred risk level and available cash.
     """
     try:
         mode = Mode.rebalance if rebalance else Mode.build
 
-        portfolio = Portfolio(risk_level, targets, cash, fractions, mode, verbose)
+        portfolio = Portfolio(
+            risk_level, targets, account, cash, fractions, mode, verbose
+        )
         portfolio.build()
         portfolio.print_portfolio()
 

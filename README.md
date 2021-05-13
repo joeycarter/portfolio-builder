@@ -1,6 +1,7 @@
 # Portfolio Builder
 
 ![GitHub](https://img.shields.io/github/license/joeycarter/portfolio-builder)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 A simple tool to build an ETF-based portfolio with a mix of bonds and equities depending on your preferred risk level and available cash.
 

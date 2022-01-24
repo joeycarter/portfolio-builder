@@ -265,10 +265,15 @@ class Portfolio:
                 "ETF": self.shares.index.to_list(),
                 "Price\n(CAD)": self.current_prices.to_list(),
                 "Current\nQuantity": self.account.to_list(),
+                "Current % of\nPortfolio": (
+                    100
+                    * (self.current_prices * self.account)
+                    / np.sum(self.current_prices * self.account)
+                ),
                 "To\nBuy/Sell": self.shares.to_list(),
                 "Total\nQuantity": total_shares.to_list(),
                 "Value\n(CAD)": (total_shares * self.current_prices).to_list(),
-                "% of\nPortfolio": (
+                "New % of\nPortfolio": (
                     100
                     * (total_shares * self.current_prices)
                     / np.sum(total_shares * self.current_prices)
@@ -279,9 +284,9 @@ class Portfolio:
             }
 
             if self.fractions:
-                fmt = ("", ".3f", "", ".2f", ".2f", ".2f", ".2f", ".2f")
+                fmt = ("", ".3f", "", ".2f", ".2f", ".2f", ".2f", ".2f", ".2f")
             else:
-                fmt = ("", ".3f", "", "", ".2f", ".2f", ".2f", ".2f")
+                fmt = ("", ".3f", "", ".2f", "", ".2f", ".2f", ".2f", ".2f")
 
         click.echo("Your portfolio:")
         click.echo("~~~~~~~~~~~~~~~\n")

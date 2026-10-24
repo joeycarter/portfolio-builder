@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "display_currency": "CAD",
+  "usd_cad": "1.35",
+  "fx_as_of": "illustrative only - not market data",
+  "cash_cad": "0",
+  "cash_usd": "0",
+  "additional_cash": "1000",
+  "additional_currency": "CAD",
+  "mode": "rebalance",
+  "fractional": false,
+  "groups": [
+    {
+      "name": "Equity",
+      "target": "40",
+      "preferred_ticker": "VUN.TO",
+      "securities": [
+        {
+          "ticker": "VUN.TO",
+          "currency": "CAD",
+          "price": "100",
+          "shares": "30",
+          "quote_as_of": "illustrative only"
+        },
+        {
+          "ticker": "VTI",
+          "currency": "USD",
+          "price": "250",
+          "shares": "10",
+          "quote_as_of": "illustrative only"
+        }
+      ]
+    },
+    {
+      "name": "Bonds",
+      "target": "60",
+      "preferred_ticker": "ZAG.TO",
+      "securities": [
+        {
+          "ticker": "ZAG.TO",
+          "currency": "CAD",
+          "price": "15",
+          "shares": "200",
+          "quote_as_of": "illustrative only"
+        }
+      ]
+    }
+  ]
+}
